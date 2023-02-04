@@ -8,11 +8,12 @@ _test_cases = [
 
 
 @pytest.mark.parametrize("test_case", _test_cases)
-def some_rule(test_case):
+def test_some_rule(test_case):
     # use data to get the result of analysis from your rule
-    result = Analyses.rule(test_case[0])
+    analysis = Analyses(test_case[0])
+    result = analysis.rule()
     assert result == test_case[1]  # (expected result)
 
 
 if __name__ == '__main__':
-    some_rule()
+    test_some_rule()
