@@ -8,6 +8,7 @@ morph = pymorphy3.MorphAnalyzer(lang='uk')
 class Analysis:
     def __init__(self, name):
         self.name = name
+        self.read_files()
         # defined in self.read()
         self.old_texts = None
         self.new_texts = None
@@ -17,23 +18,19 @@ class Analysis:
         self.sentences_new = None
         self.words_old = None
         self.words_new = None
-        self.read()
+        self.tokenize()
         # defined in each rule()
         self.rule_result = None
 
-    def tokenize(self):
-        # self.sentences =
-        # self.words =
-        pass
-
-    def read(self):
+    def read_files(self):
         # структура файлів для корпусу:
         # "zelenskyi/old/feb_20.1.txt"
         # тобто папка із прізвищем, у ній дві папки: old і new,
         # і в цих папках файли формату
         # дата.порядковий_номер_допису_за_день.txt
+        pass
 
-        self.tokenize()
+    def tokenize(self):
         # self.old_texts = усі тексти з теки old
         # self.new_texts = усі тексти з теки new
         # self.posts_old = окремі пости з теки old
