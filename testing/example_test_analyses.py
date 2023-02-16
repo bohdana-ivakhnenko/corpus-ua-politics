@@ -1,18 +1,20 @@
 import pytest
-from processing.analyses import Analyses
+from processing.analyses import Analysis
 
-_test_cases = [
-    ("data1", "expected result"),
-    ("data2", "expected result")
+_test_cases_rule = [
+    "expected result 1",
+    "expected result 2"
 ]
 
+name_politician = ""
+politician = Analysis(name_politician)
 
-@pytest.mark.parametrize("test_case", _test_cases)
+
+@pytest.mark.parametrize("test_case", _test_cases_rule)
 def test_some_rule(test_case):
     # use data to get the result of analysis from your rule
-    analysis = Analyses(test_case[0])
-    result = analysis.rule()
-    assert result == test_case[1]  # (expected result)
+    politician.rule()
+    assert politician.rule_result == test_case  # (expected result)
 
 
 if __name__ == '__main__':

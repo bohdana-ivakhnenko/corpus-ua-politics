@@ -1,54 +1,70 @@
 import stanza
-import pymorphy3
 import tokenize_uk
-# треба вирішити чим саме користуватимемось. stanza доволі повільна, але можна подивитись які будуть обсяги
-# імпортувати штуки для гарного виведення у консоль - кольори й таблички
-# імпортувати штуки для збереження - БД?
+from tabulate import tabulate
+import pymorphy3
+morph = pymorphy3.MorphAnalyzer(lang='uk')
 
 
 class Analysis:
     def __init__(self, name):
         self.name = name
+        # defined in self.read()
+        self.old_texts = None
+        self.new_texts = None
+        self.posts_old = None
+        self.posts_new = None
+        self.sentences_old = None
+        self.sentences_new = None
+        self.words_old = None
+        self.words_new = None
         self.read()
-        self.tokenize()
-
-    def read(self):
-        # структура: папка із прізвищем-ім'ям, у ній папки old і new, у них кожен текст в окремому файлі
-        # окремий файл дасть можливість аналізувати частотність певних явищ на пост
-        # можна зробити систему із назва файлу - дата і час посту, аналізувати кількість постів на день тощо
-        # але якщо чесно мені не хочеться заморачуватись, а чи буде цим займатись хтось інший?
-        # або простіше: папка, у ній два файли, у файлах тексти із певним розділювачем (/n/n?)
-
-        # self.text = суцільний текст
-        # self.posts = окремі пости
-        pass
+        # defined in each rule()
+        self.rule_result = None
 
     def tokenize(self):
-        # начебто тільки речення й слова треба
-        # чи треба зберігати набори слів/речень під конкретні пости чи можна суцільний текст?
-
-        # self.sents =
+        # self.sentences =
         # self.words =
         pass
 
-    def full(self):
-        # тут викликати всі інші функції аналізу
+    def read(self):
+        # структура файлів для корпусу:
+        # "zelenskyi/old/feb_20.1.txt"
+        # тобто папка із прізвищем, у ній дві папки: old і new,
+        # і в цих папках файли формату
+        # дата.порядковий_номер_допису_за_день.txt
+
+        self.tokenize()
+        # self.old_texts = усі тексти з теки old
+        # self.new_texts = усі тексти з теки new
+        # self.posts_old = окремі пости з теки old
+        # self.posts_new = окремі пости з теки new
+        # self.sentences_old = окремі речення з теки old
+        # self.sentences_new = окремі речення з теки new
+        # self.words_old = окремі слова з теки old
+        # self.words_new = окремі слова з теки new
         pass
 
-    def analysis_name(self):
+    def rule(self):
         # тіло аналізу
 
+        # наприклад:
         # if *property* in *text*:
         #    self.analysis_name_result = "результат аналізу"
         #    return self.analysis_name_result
-        #
-        # self.analysis_name_result = False
+        self.rule_result = False
+
+    def full_analysis(self):
+        # тут викликати всі функції типу rule_{name}
+        self.rule()
         pass
 
     def save_results(self):
-        # у якому форматі будемо зберігати? чи треба це взагалі?
         pass
 
 
-if __name__ == __main__:
+if __name__ == "__main__":
     politician = Analysis("volodymyr zelenskyi")
+    # politician.rule()
+    # print(politician.rule_result)
+    politician.full_analysis()
+    # politician.save_results()
