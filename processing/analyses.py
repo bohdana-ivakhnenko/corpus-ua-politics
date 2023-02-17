@@ -1,3 +1,5 @@
+import os
+from datetime import date
 import stanza
 import tokenize_uk
 from tabulate import tabulate
@@ -6,6 +8,9 @@ morph = pymorphy3.MorphAnalyzer(lang='uk')
 
 
 class Analysis:
+    present_files = [path.split(".")[0] for path in os.listdir("../results")
+                     if path.split(".")[-1] == "txt" and "test" not in path]
+
     def __init__(self, name):
         self.name = name
         self.read_files()
@@ -21,6 +26,8 @@ class Analysis:
         self.tokenize()
         # defined in each rule()
         self.rule_result = None
+        # results of the whole analysis
+        self.rules_results = []
 
     def read_files(self):
         # структура файлів для корпусу:
@@ -48,20 +55,39 @@ class Analysis:
         # if *property* in *text*:
         #    self.analysis_name_result = "результат аналізу"
         #    return self.analysis_name_result
+
         self.rule_result = False
 
     def full_analysis(self):
-        # тут викликати всі функції типу rule_{name}
-        self.rule()
-        pass
+        if self.name in os.listdir("../data"):
+            # тут викликати всі функції типу rule_{name}
+            self.rule()
+            self.rules_results.append(("Rule name", self.rule_result))
+            return
+        raise FileNotFoundError
 
-    def save_results(self):
-        pass
+    def get_file_name(self):
+        day = str(date.today()).split("-")[-1]
+        number = 1
+        if Analysis.present_files:
+            numbers = [int(file.split("_")[-1])
+                       if file.split("_")[0] == self.name and file.split("_")[1] == str(day)
+                       else 0
+                       for file in Analysis.present_files]
+            number = max(numbers) + 1
+        return f"{self.name}_{day}_{number}.txt"
+
+    def show_results(self, headers=("Правило", "Результат"), save=False):
+        # options for the tablefmt: "pretty", "fancy_grid"
+        if save:
+            with open(f"../results/{self.get_file_name()}", "w") as file:
+                print(tabulate(self.rules_results, headers=headers, tablefmt="pretty"), file=file)
+        print(tabulate(self.rules_results, headers=headers, tablefmt="pretty"))
 
 
 if __name__ == "__main__":
-    politician = Analysis("volodymyr zelenskyi")
+    politician = Analysis("zelenskyi")
     # politician.rule()
     # print(politician.rule_result)
-    politician.full_analysis()
-    # politician.save_results()
+    # politician.full_analysis()
+    # politician.show_results(save=True)
