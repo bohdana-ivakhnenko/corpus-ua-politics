@@ -1,10 +1,8 @@
 import os
 from datetime import date
 import stanza
-import tokenize_uk
+nlp = stanza.Pipeline("uk")
 from tabulate import tabulate
-import pymorphy3
-morph = pymorphy3.MorphAnalyzer(lang='uk')
 
 
 class Analysis:
@@ -14,16 +12,17 @@ class Analysis:
 
     def __init__(self, name):
         self.name = name
+        # defined in self.read_files()
+        self.texts_old = ''
+        self.texts_new = ''
+        self.posts_old = []
+        self.posts_new = []
         self.read_files()
-        # defined in self.read()
-        self.texts_old = None
-        self.texts_new = None
-        self.posts_old = None
-        self.posts_new = None
-        self.sentences_old = None
-        self.sentences_new = None
-        self.words_old = None
-        self.words_new = None
+        # defined in self.tokenize()
+        self.sentences_old = []
+        self.sentences_new = []
+        self.words_old = []
+        self.words_new = []
         self.tokenize()
         # defined in each rule()
         self.rule_result = {"old": None, "new": None}
@@ -36,27 +35,45 @@ class Analysis:
         # тобто папка із прізвищем, у ній дві папки: old і new,
         # і в цих папках файли формату
         # дата.порядковий_номер_допису_за_день.txt
-        pass
-
-    def tokenize(self):
         # self.texts_old = усі тексти з теки old
         # self.texts_new = усі тексти з теки new
         # self.posts_old = окремі пости з теки old
         # self.posts_new = окремі пости з теки new
+        dir_new = '../data/' + self.name + '/new/'
+        dir_old = '../data/' + self.name + '/old/'
+        for filename_new in os.listdir(dir_new):
+            with open(dir_new + filename_new, "r", encoding="windows-1251") as f:
+                self.posts_new.append("".join(f.readlines()[2:]))
+                self.texts_new += self.posts_new[-1]
+        for filename_old in os.listdir(dir_old):
+            with open(dir_old + filename_old, "r", encoding="windows-1251") as f:
+                self.posts_old.append("".join(f.readlines()[2:]))
+                self.texts_old += self.posts_old[-1]
+
+    def tokenize(self):
         # self.sentences_old = окремі речення з теки old
         # self.sentences_new = окремі речення з теки new
         # self.words_old = окремі слова з теки old
         # self.words_new = окремі слова з теки new
-        pass
+        for post in self.posts_new:
+            self.sentences_new.append([sentence.text for sentence in nlp(post).sentences])
+            self.words_new.append([sentence.words for sentence in nlp(post).sentences])
+        for post in self.posts_old:
+            self.sentences_old.append([sentence.text for sentence in nlp(post).sentences])
+            self.words_old.append([sentence.words for sentence in nlp(post).sentences])
 
     def rule(self, data_period):
         # тіло аналізу
+        # результат аналізу має бути в форматі словника:
+        # {'назва параметру аналізу':*значення*, тощо}
+        # навіть якщо параметр один
 
         # наприклад:
         # if *property* in *text*:
         #    self.rule_result[data_period] = "результат аналізу"
         #    return rule_result[data_period]
-        return False
+        # return False
+        pass
 
     def full_analysis(self):
         if self.name in os.listdir("../data"):
