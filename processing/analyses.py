@@ -21,6 +21,7 @@ class Analysis:
         # defined in self.tokenize()
         self.sentences_old = []
         self.sentences_new = []
+        # words are already parametrised
         self.words_old = []
         self.words_new = []
         self.tokenize()
@@ -39,16 +40,16 @@ class Analysis:
         # self.texts_new = усі тексти з теки new
         # self.posts_old = окремі пости з теки old
         # self.posts_new = окремі пости з теки new
-        dir_new = '../data/' + self.name + '/new/'
         dir_old = '../data/' + self.name + '/old/'
-        for filename_new in os.listdir(dir_new):
-            with open(dir_new + filename_new, "r", encoding="windows-1251") as f:
-                self.posts_new.append("".join(f.readlines()[2:]))
-                self.texts_new += self.posts_new[-1]
-        for filename_old in os.listdir(dir_old):
-            with open(dir_old + filename_old, "r", encoding="windows-1251") as f:
+        dir_new = '../data/' + self.name + '/new/'
+        for filename_old in [file for file in os.listdir(dir_old) if file.endswith("txt")]:
+            with open(dir_old + filename_old, "r", encoding="utf-8", errors="surrogateescape") as f:
                 self.posts_old.append("".join(f.readlines()[2:]))
-                self.texts_old += self.posts_old[-1]
+        self.texts_old = "\n".join(self.posts_old)
+        for filename_new in [file for file in os.listdir(dir_new) if file.endswith("txt")]:
+            with open(dir_new + filename_new, "r", encoding="utf-8", errors="surrogateescape") as f:
+                self.posts_new.append("".join(f.readlines()[2:]))
+        self.texts_new = "\n".join(self.posts_new)
 
     def tokenize(self):
         # self.sentences_old = окремі речення з теки old
