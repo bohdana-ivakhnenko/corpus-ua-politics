@@ -107,7 +107,9 @@ ___Приклад 2___:
 
 ## Корисні посилання
 
-Бібліотека, яку можна використати для переведення емодзів у читабельну для людини і програми текстову версію: https://pypi.org/project/emoji/
+Бібліотека, яку можна використати для переведення **емодзів** у читабельну для людини і програми текстову версію: https://pypi.org/project/emoji/
+
+Документація до української версії **stanza**: https://universaldependencies.org/treebanks/uk_iu/index.html
 
 ## Бажаю всім успіхів та натхнення! :chocolate_bar:
 ![black-fast-typing-cat-rfo58klql1gydnw3](https://user-images.githubusercontent.com/64704141/219503802-7b3195b7-b874-40c9-8180-4eac4dc0c51d.gif)
