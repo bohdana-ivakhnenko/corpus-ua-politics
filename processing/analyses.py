@@ -1,8 +1,10 @@
 import os
 from datetime import date
 import stanza
-nlp = stanza.Pipeline("uk")
 from tabulate import tabulate
+import re
+from tqdm import tqdm
+nlp = stanza.Pipeline("uk")
 
 
 class Analysis:
@@ -46,11 +48,11 @@ class Analysis:
         # self.texts_new = усі тексти з теки new
         # self.posts_old = окремі пости з теки old
         # self.posts_new = окремі пости з теки new
-        for filename_old in self.list_dir_old:
+        for filename_old in tqdm(self.list_dir_old, desc='Reading "old" files'):
             with open(self.dir_old + filename_old, "r", encoding="utf-8", errors="surrogateescape") as f:
                 self.posts_old.append("".join(f.readlines()[2:]))
         self.texts_old = "\n".join(self.posts_old)
-        for filename_new in self.list_dir_new:
+        for filename_new in tqdm(self.list_dir_new, desc='Reading "new" files'):
             with open(self.dir_new + filename_new, "r", encoding="utf-8", errors="surrogateescape") as f:
                 self.posts_new.append("".join(f.readlines()[2:]))
         self.texts_new = "\n".join(self.posts_new)
@@ -60,12 +62,12 @@ class Analysis:
         # self.sentences_new = окремі речення з теки new
         # self.words_old = окремі слова з теки old
         # self.words_new = окремі слова з теки new
-        for post in self.posts_new:
-            self.sentences_new.append([sentence.text for sentence in nlp(post).sentences])
-            self.words_new.append([sentence.words for sentence in nlp(post).sentences])
-        for post in self.posts_old:
+        for post in tqdm(self.posts_old, desc="Tokenizing \"old\" files"):
             self.sentences_old.append([sentence.text for sentence in nlp(post).sentences])
             self.words_old.append([sentence.words for sentence in nlp(post).sentences])
+        for post in tqdm(self.posts_new, desc="Tokenizing \"new\" files"):
+            self.sentences_new.append([sentence.text for sentence in nlp(post).sentences])
+            self.words_new.append([sentence.words for sentence in nlp(post).sentences])
 
     def rule(self, data_period):
         # тіло аналізу
