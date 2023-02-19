@@ -10,11 +10,12 @@ class Analysis:
                      for path in os.listdir("../results")
                      if path.split(".")[-1] == "txt" and "test" not in path]
 
-    def __init__(self, name):
+    def __init__(self, name, data_directory='../data/'):
         self.name = name
-        self.dir_old = '../data/' + self.name + '/old/'
+        self.data_directory = data_directory
+        self.dir_old = self.data_directory + self.name + '/old/'
         self.list_dir_old = [file for file in os.listdir(self.dir_old) if file.endswith("txt")]
-        self.dir_new = '../data/' + self.name + '/new/'
+        self.dir_new = self.data_directory + self.name + '/new/'
         self.list_dir_new = [file for file in os.listdir(self.dir_new) if file.endswith("txt")]
         # defined in self.read_files()
         self.texts_old = ''
@@ -31,7 +32,7 @@ class Analysis:
         self.tokenize()
         # defined in each rule()
         self.rule_result = {"old": None, "new": None}
-        self.rule_result_freq = {"old": None, "new": None}
+        self.rule_freq_result = {"old": None, "new": None}
         # results of the whole analysis
         self.rules_results = []
 
@@ -80,21 +81,27 @@ class Analysis:
         pass
 
     def rule_freq(self, data_period):
-        files_list = []
         data_dict = {"old": self.list_dir_old,
                      "new": self.list_dir_new}
+        month_days = {("feb"): 28,
+                      ("apr", "jun", "sep", "nov"): 30,
+                      ("jan", "mar", "may", "jul", "aug", "oct", "dec"): 31}
+        files_list = []
         if data_period in ["old", "new"]:
             for file in data_dict[data_period]:
                 file_name = file.split(".")
                 files_list.append(file_name[0])
         if files_list:
-            self.rule_result_freq[data_period] = round(len(files_list) / len(set(files_list)), 2)
-            return self.rule_result_freq[data_period]
-        self.rule_result_freq[data_period] = 0.0
+            month = files_list[0].split("_")[0]
+            key = [key for key in month_days.keys() if month in key][0]
+            self.rule_freq_result[data_period] = round(len(files_list) / month_days[key], 2)
+            # self.rule_result_freq[data_period] = round(len(files_list) / len(set(files_list)), 2)
+            return self.rule_freq_result[data_period]
+        self.rule_freq_result[data_period] = 0.0
         return 0.0
 
     def full_analysis(self):
-        if self.name in os.listdir("../data"):
+        if self.name in os.listdir(self.data_directory):
             # приклад виклику правила і записування результатів
             self.rule("old")
             self.rule("new")
@@ -102,7 +109,8 @@ class Analysis:
             # тут викликати всі функції типу rule_{name}
             self.rule_freq("old")
             self.rule_freq("new")
-            self.rules_results.append(("Частота дописування", self.rule_result_freq["old"], self.rule_result_freq["new"]))
+            self.rules_results.append(("Частота дописування",
+                                       self.rule_freq_result["old"], self.rule_freq_result["new"]))
             return
         raise FileNotFoundError
 
