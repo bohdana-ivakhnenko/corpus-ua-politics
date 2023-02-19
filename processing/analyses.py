@@ -1,4 +1,3 @@
-import collections
 import os
 from datetime import date
 import stanza
@@ -91,8 +90,8 @@ class Analysis:
         if files_list:
             self.rule_result_freq[data_period] = round(len(files_list) / len(set(files_list)), 2)
             return self.rule_result_freq[data_period]
-        self.rule_result_freq[data_period] = 0.00
-        return 0.00
+        self.rule_result_freq[data_period] = 0.0
+        return 0.0
 
     def full_analysis(self):
         if self.name in os.listdir("../data"):
