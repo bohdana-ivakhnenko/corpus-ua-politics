@@ -1,3 +1,4 @@
+import collections
 import os
 from datetime import date
 import stanza
@@ -12,6 +13,10 @@ class Analysis:
 
     def __init__(self, name):
         self.name = name
+        self.dir_old = '../data/' + self.name + '/old/'
+        self.list_dir_old = [file for file in os.listdir(self.dir_old) if file.endswith("txt")]
+        self.dir_new = '../data/' + self.name + '/new/'
+        self.list_dir_new = [file for file in os.listdir(self.dir_new) if file.endswith("txt")]
         # defined in self.read_files()
         self.texts_old = ''
         self.texts_new = ''
@@ -27,6 +32,7 @@ class Analysis:
         self.tokenize()
         # defined in each rule()
         self.rule_result = {"old": None, "new": None}
+        self.rule_result_freq = {"old": None, "new": None}
         # results of the whole analysis
         self.rules_results = []
 
@@ -40,14 +46,12 @@ class Analysis:
         # self.texts_new = усі тексти з теки new
         # self.posts_old = окремі пости з теки old
         # self.posts_new = окремі пости з теки new
-        dir_old = '../data/' + self.name + '/old/'
-        dir_new = '../data/' + self.name + '/new/'
-        for filename_old in [file for file in os.listdir(dir_old) if file.endswith("txt")]:
-            with open(dir_old + filename_old, "r", encoding="utf-8", errors="surrogateescape") as f:
+        for filename_old in self.list_dir_old:
+            with open(self.dir_old + filename_old, "r", encoding="utf-8", errors="surrogateescape") as f:
                 self.posts_old.append("".join(f.readlines()[2:]))
         self.texts_old = "\n".join(self.posts_old)
-        for filename_new in [file for file in os.listdir(dir_new) if file.endswith("txt")]:
-            with open(dir_new + filename_new, "r", encoding="utf-8", errors="surrogateescape") as f:
+        for filename_new in self.list_dir_new:
+            with open(self.dir_new + filename_new, "r", encoding="utf-8", errors="surrogateescape") as f:
                 self.posts_new.append("".join(f.readlines()[2:]))
         self.texts_new = "\n".join(self.posts_new)
 
@@ -76,12 +80,30 @@ class Analysis:
         # return False
         pass
 
+    def rule_freq(self, data_period):
+        files_list = []
+        data_dict = {"old": self.list_dir_old,
+                     "new": self.list_dir_new}
+        if data_period in ["old", "new"]:
+            for file in data_dict[data_period]:
+                file_name = file.split(".")
+                files_list.append(file_name[0])
+        if files_list:
+            self.rule_result_freq[data_period] = round(len(files_list) / len(set(files_list)), 2)
+            return self.rule_result_freq[data_period]
+        self.rule_result_freq[data_period] = 0.00
+        return 0.00
+
     def full_analysis(self):
         if self.name in os.listdir("../data"):
-            # тут викликати всі функції типу rule_{name}
+            # приклад виклику правила і записування результатів
             self.rule("old")
             self.rule("new")
             self.rules_results.append(("Rule name", self.rule_result["old"], self.rule_result["new"]))
+            # тут викликати всі функції типу rule_{name}
+            self.rule_freq("old")
+            self.rule_freq("new")
+            self.rules_results.append(("Частота дописування", self.rule_result_freq["old"], self.rule_result_freq["new"]))
             return
         raise FileNotFoundError
 
