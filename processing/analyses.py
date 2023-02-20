@@ -1,6 +1,7 @@
 import os
 from datetime import date
 import stanza
+# stanza.download('uk')  # завантажте українську модель один раз
 from tabulate import tabulate
 import re
 from tqdm import tqdm
