@@ -35,7 +35,7 @@ class Analysis:
         self.tokenize()
         # defined in each rule()
         self.rule_result = {"old": None, "new": None}
-        self.rule_result_freq = {"old": None, "new": None}
+        self.rule_posts_per_day_result = {"old": None, "new": None}
         self.rule_result_links = {"old": None, "new": None}
         # results of the whole analysis
         self.rules_results = []
@@ -52,11 +52,11 @@ class Analysis:
         # self.posts_new = окремі пости з теки new
         for filename_old in tqdm(self.list_dir_old, desc="Reading 'old' files"):
             with open(self.dir_old + filename_old, "r", encoding="utf-8", errors="surrogateescape") as f:
-                self.posts_old.append("".join(f.readlines()[2:]))
+                self.posts_old.append("".join(f.readlines()[2:]).strip())
         self.texts_old = "\n".join(self.posts_old)
         for filename_new in tqdm(self.list_dir_new, desc="Reading 'new' files"):
             with open(self.dir_new + filename_new, "r", encoding="utf-8", errors="surrogateescape") as f:
-                self.posts_new.append("".join(f.readlines()[2:]))
+                self.posts_new.append("".join(f.readlines()[2:]).strip())
         self.texts_new = "\n".join(self.posts_new)
 
     def tokenize(self):
@@ -84,7 +84,7 @@ class Analysis:
         # return False
         pass
 
-    def rule_freq(self, data_period):
+    def rule_posts_per_day(self, data_period):
         data_dict = {"old": self.list_dir_old,
                      "new": self.list_dir_new}
         month_days = {("feb"): 28,
@@ -98,10 +98,10 @@ class Analysis:
         if files_list:
             month = files_list[0].split("_")[0]
             key = [key for key in month_days.keys() if month in key][0]
-            self.rule_freq_result[data_period] = round(len(files_list) / month_days[key], 2)
-            # self.rule_result_freq[data_period] = round(len(files_list) / len(set(files_list)), 2)
-            return self.rule_freq_result[data_period]
-        self.rule_freq_result[data_period] = 0.0
+            self.rule_posts_per_day_result[data_period] = round(len(files_list) / month_days[key], 2)
+            # self.rule_posts_per_day_result[data_period] = round(len(files_list) / len(set(files_list)), 2)
+            return self.rule_posts_per_day_result[data_period]
+        self.rule_posts_per_day_result[data_period] = 0.0
         return 0.0
 
     def rule_links(self, data_period):
@@ -120,10 +120,11 @@ class Analysis:
             self.rule("new")
             self.rules_results.append(("Rule name", self.rule_result["old"], self.rule_result["new"]))
             # тут викликати всі функції типу rule_{name}
-            self.rule_freq("old")
-            self.rule_freq("new")
+            self.rule_posts_per_day("old")
+            self.rule_posts_per_day("new")
             self.rules_results.append(("Частота дописування",
-                                       self.rule_freq_result["old"], self.rule_freq_result["new"]))
+                                       self.rule_posts_per_day_result["old"], 
+                                       self.rule_posts_per_day_result["new"]))
             self.rule_links("old")
             self.rule_links("new")
             self.rules_results.append(("Частота посилань на інші джерела/людей", 
