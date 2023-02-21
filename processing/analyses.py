@@ -36,6 +36,8 @@ class Analysis:
         # defined in each rule()
         self.rule_result = {"old": None, "new": None}
         self.rule_posts_per_day_result = {"old": None, "new": None}
+        self.rule_size_result_sentences = {"old": None, "new": None}
+        self.rule_size_result_words = {"old": None, "new": None}
         self.rule_result_links = {"old": None, "new": None}
         # results of the whole analysis
         self.rules_results = []
@@ -104,7 +106,18 @@ class Analysis:
         self.rule_posts_per_day_result[data_period] = 0.0
         return 0.0
 
-    def rule_links(self, data_period):
+    def rule_size(self, data_period):
+        data_dict = {"old": self.words_old,
+                     "new": self.words_new}
+        posts_num = len(data_dict[data_period])
+        sentences_list = [sentence for post in data_dict[data_period] for sentence in post]
+        sentences_num = len(sentences_list)
+        words_num = len([word for sentence in sentences_list for word in sentence])
+        self.rule_size_result_sentences[data_period] = round(sentences_num / posts_num, 2)
+        self.rule_size_result_words[data_period] = round(words_num / posts_num, 2)
+        return self.rule_size_result_sentences[data_period], self.rule_size_result_words[data_period]
+
+  def rule_links(self, data_period):
         links = re.findall(r'<link>(https?://\S+)<\/link>', self.texts_old if data_period == "old" else self.texts_new)
         num_links = len(links)
         if num_links == 0:
@@ -125,6 +138,12 @@ class Analysis:
             self.rules_results.append(("Частота дописування",
                                        self.rule_posts_per_day_result["old"], 
                                        self.rule_posts_per_day_result["new"]))
+            self.rule_size("old")
+            self.rule_size("new")
+            self.rules_results.append(("Середня кількість речень у пості",
+                                       self.rule_size_result_sentences["old"], self.rule_size_result_sentences["new"]))
+            self.rules_results.append(("Середня кількість слів у пості",
+                                       self.rule_size_result_words["old"], self.rule_size_result_words["new"]))
             self.rule_links("old")
             self.rule_links("new")
             self.rules_results.append(("Частота посилань на інші джерела/людей", 
