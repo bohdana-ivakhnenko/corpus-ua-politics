@@ -1,10 +1,12 @@
 import os
+from collections import Counter
 from datetime import date
 import stanza
 # stanza.download('uk')  # завантажте українську модель один раз
 from tabulate import tabulate
 import re
 from tqdm import tqdm
+
 nlp = stanza.Pipeline("uk")
 
 
@@ -38,6 +40,7 @@ class Analysis:
         self.rule_freq_result = {"old": None, "new": None}
         # results of the whole analysis
         self.rules_results = []
+        self.rule_frequency_of_words_result = {'old': None, 'new': None}
 
     def read_files(self):
         # структура файлів для корпусу:
@@ -86,7 +89,7 @@ class Analysis:
     def rule_freq(self, data_period):
         data_dict = {"old": self.list_dir_old,
                      "new": self.list_dir_new}
-        month_days = {("feb"): 28,
+        month_days = {"feb": 28,
                       ("apr", "jun", "sep", "nov"): 30,
                       ("jan", "mar", "may", "jul", "aug", "oct", "dec"): 31}
         files_list = []
@@ -103,6 +106,41 @@ class Analysis:
         self.rule_freq_result[data_period] = 0.0
         return 0.0
 
+    def rule_frequency_of_words(self, data_period):
+        data_dict = {"old": self.sentences_old,
+                     "new": self.sentences_new}
+        freq_words = {}
+        words = []
+        sentences_without_special_characters = []
+        for sentence in data_dict[data_period]:
+            sentences = []
+            for s in sentence:
+                clear_s = re.sub(r'\^\w\s+', '', s)
+                clear_s = re.sub(r'\(\d{1,2},\d{1,2}%\)', '', clear_s)
+                clear_s = re.sub(r'\d+\)', '', clear_s)
+                clear_s = re.sub(r'\n', '', clear_s)
+                sentences.append(clear_s)
+                words.extend(clear_s.split(' '))
+            sentences_without_special_characters.extend(sentences)
+
+        words = list(set(words))
+        sentences_without_special_characters = list(set(sentences_without_special_characters))
+
+        for word in words:
+            freq_words[word] = 0;
+            counts = Counter()
+            for s in sentences_without_special_characters:
+                counts.update(word.strip('.,?!"\'').lower() for word in s.split())
+
+            freq_words[word] = counts[word]
+
+        sorted_freq_words = dict(sorted(freq_words.items(), key=lambda x: x[1], reverse=True))
+
+        prepared_values = list(sum(zip(*[iter(list(sorted_freq_words.keys())[:15])] * 5, ['\n'] * 100), tuple()))
+
+        self.rule_frequency_of_words_result[data_period] = ' '.join(prepared_values)
+        return self.rule_frequency_of_words_result[data_period]
+
     def full_analysis(self):
         if self.name in os.listdir(self.data_directory):
             # приклад виклику правила і записування результатів
@@ -114,6 +152,12 @@ class Analysis:
             self.rule_freq("new")
             self.rules_results.append(("Частота дописування",
                                        self.rule_freq_result["old"], self.rule_freq_result["new"]))
+
+            self.rule_frequency_of_words('old')
+            self.rule_frequency_of_words('new')
+            self.rules_results.append(("Частотні слова",
+                                       self.rule_frequency_of_words_result["old"],
+                                       self.rule_frequency_of_words_result["new"]))
             return
         raise FileNotFoundError
 
@@ -137,8 +181,9 @@ class Analysis:
 
 
 if __name__ == "__main__":
-    politician = Analysis("zelenskyi")
+    politician = Analysis("shmygal")
     # politician.rule()
     # print(politician.rule_result)
-    # politician.full_analysis()
-    # politician.show_results(save=True)
+    politician.full_analysis()
+    politician.show_results(save=True)
+
