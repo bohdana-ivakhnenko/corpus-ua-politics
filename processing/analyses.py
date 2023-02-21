@@ -38,9 +38,9 @@ class Analysis:
         # defined in each rule()
         self.rule_result = {"old": None, "new": None}
         self.rule_freq_result = {"old": None, "new": None}
+        self.rule_frequency_list_result = {'old': None, 'new': None}
         # results of the whole analysis
         self.rules_results = []
-        self.rule_frequency_of_words_result = {'old': None, 'new': None}
 
     def read_files(self):
         # структура файлів для корпусу:
@@ -89,7 +89,7 @@ class Analysis:
     def rule_freq(self, data_period):
         data_dict = {"old": self.list_dir_old,
                      "new": self.list_dir_new}
-        month_days = {"feb": 28,
+        month_days = {("feb"): 28,
                       ("apr", "jun", "sep", "nov"): 30,
                       ("jan", "mar", "may", "jul", "aug", "oct", "dec"): 31}
         files_list = []
@@ -106,42 +106,41 @@ class Analysis:
         self.rule_freq_result[data_period] = 0.0
         return 0.0
 
-    def rule_frequency_of_words(self, data_period):
-        data_dict = {"old": self.sentences_old,
-                     "new": self.sentences_new}
-        freq_words = {}
-        words = []
-        sentences_without_special_characters = []
-        for sentence in data_dict[data_period]:
-            sentences = []
-            for s in sentence:
-                clear_s = re.sub(r'\^\w\s+', '', s)
-                clear_s = re.sub(r'\(\d{1,2},\d{1,2}%\)', '', clear_s)
-                clear_s = re.sub(r'\d+\)', '', clear_s)
-                clear_s = re.sub(r'\n', '', clear_s)
-                sentences.append(clear_s)
-                words.extend(clear_s.split(' '))
-            sentences_without_special_characters.extend(sentences)
+    def rule_frequency_list(self, data_period):
+        data_dict_sentences = {"old": self.sentences_old,
+                               "new": self.sentences_new}
+        data_dict_words = {
+            "old": self.words_old,
+            "new": self.words_new
+        }
+        self.rule_frequency_list_result[data_period] = {}
+        lemmas = []
 
-        words = list(set(words))
-        sentences_without_special_characters = list(set(sentences_without_special_characters))
+        for text in data_dict_words[data_period]:
+            for sentence in text:
+                for word in sentence:
+                    if word.upos in ['PUNKT', 'SYM', 'X']:
+                        continue
+                    lemmas.append(word.lemma)
+                    self.rule_frequency_list_result[data_period][word.lemma] = 0
 
-        for word in words:
-            freq_words[word] = 0;
-            counts = Counter()
-            for s in sentences_without_special_characters:
-                counts.update(word.strip('.,?!"\'').lower() for word in s.split())
+        lemmas = list(set(lemmas))
 
-            freq_words[word] = counts[word]
+        for lemma in lemmas:
+            for text in data_dict_sentences[data_period]:
+                counts = Counter()
+                for sentence in text:
+                    counts.update(word.strip('.,?!"\':;').lower() for word in sentence.split())
+                self.rule_frequency_list_result[data_period][lemma] += counts[lemma]
 
-        sorted_freq_words = dict(sorted(freq_words.items(), key=lambda x: x[1], reverse=True))
+        return self.rule_frequency_list_result[data_period]
 
-        prepared_values = list(sum(zip(*[iter(list(sorted_freq_words.keys())[:15])] * 5, ['\n'] * 100), tuple()))
+    def prepare_frequency_list_to_print(self, data_period, words, words_in_line):
+        sorted_freq_words = dict(sorted(self.rule_frequency_list_result[data_period].items(), key=lambda x: x[1], reverse=True))
+        prepared_values = list(sum(zip(*[iter(list(sorted_freq_words.keys())[:words])] * words_in_line, ['\n'] * 100), tuple()))
+        return ' '.join(prepared_values)
 
-        self.rule_frequency_of_words_result[data_period] = ' '.join(prepared_values)
-        return self.rule_frequency_of_words_result[data_period]
-
-    def full_analysis(self):
+    def full_analysis(self, words=10, words_in_line=5):
         if self.name in os.listdir(self.data_directory):
             # приклад виклику правила і записування результатів
             self.rule("old")
@@ -153,11 +152,11 @@ class Analysis:
             self.rules_results.append(("Частота дописування",
                                        self.rule_freq_result["old"], self.rule_freq_result["new"]))
 
-            self.rule_frequency_of_words('old')
-            self.rule_frequency_of_words('new')
+            self.rule_frequency_list('old')
+            self.rule_frequency_list('new')
             self.rules_results.append(("Частотні слова",
-                                       self.rule_frequency_of_words_result["old"],
-                                       self.rule_frequency_of_words_result["new"]))
+                                       self.prepare_frequency_list_to_print("old", words, words_in_line),
+                                       self.prepare_frequency_list_to_print("new", words, words_in_line)))
             return
         raise FileNotFoundError
 
@@ -184,6 +183,5 @@ if __name__ == "__main__":
     politician = Analysis("shmygal")
     # politician.rule()
     # print(politician.rule_result)
-    politician.full_analysis()
+    politician.full_analysis(70, 7)
     politician.show_results(save=True)
-
