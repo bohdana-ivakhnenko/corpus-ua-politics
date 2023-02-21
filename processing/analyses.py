@@ -34,6 +34,7 @@ class Analysis:
         # defined in each rule()
         self.rule_result = {"old": None, "new": None}
         self.rule_result_freq = {"old": None, "new": None}
+        self.rule_result_links = {"old": None, "new": None}
         # results of the whole analysis
         self.rules_results = []
 
@@ -95,6 +96,15 @@ class Analysis:
         self.rule_result_freq[data_period] = 0.0
         return 0.0
 
+    def rule_links(self, data_period):
+        links = re.findall(r'<link>(https?://\S+)<\/link>', self.texts_old if data_period == "old" else self.texts_new)
+        num_links = len(links)
+        if num_links == 0:
+            self.rule_result_links[data_period] = 0
+        else:
+            self.rule_result_links[data_period] = num_links
+        return self.rule_result_links[data_period]
+
     def full_analysis(self):
         if self.name in os.listdir("../data"):
             # приклад виклику правила і записування результатів
@@ -105,6 +115,9 @@ class Analysis:
             self.rule_freq("old")
             self.rule_freq("new")
             self.rules_results.append(("Частота дописування", self.rule_result_freq["old"], self.rule_result_freq["new"]))
+            self.rule_links("old")
+            self.rule_links("new")
+            self.rules_results.append(("Частота посилань на інші джерела/людей", self.rule_result_links["old"], self.rule_result_links["new"]))
             return
         raise FileNotFoundError
 
