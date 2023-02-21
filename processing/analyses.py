@@ -1,6 +1,7 @@
 import os
 from datetime import date
 import stanza
+# stanza.download('uk')  # завантажте українську модель один раз
 from tabulate import tabulate
 import re
 from tqdm import tqdm
@@ -12,11 +13,12 @@ class Analysis:
                      for path in os.listdir("../results")
                      if path.split(".")[-1] == "txt" and "test" not in path]
 
-    def __init__(self, name):
+    def __init__(self, name, data_directory='../data/'):
         self.name = name
-        self.dir_old = '../data/' + self.name + '/old/'
+        self.data_directory = data_directory
+        self.dir_old = self.data_directory + self.name + '/old/'
         self.list_dir_old = [file for file in os.listdir(self.dir_old) if file.endswith("txt")]
-        self.dir_new = '../data/' + self.name + '/new/'
+        self.dir_new = self.data_directory + self.name + '/new/'
         self.list_dir_new = [file for file in os.listdir(self.dir_new) if file.endswith("txt")]
         # defined in self.read_files()
         self.texts_old = ''
@@ -48,11 +50,11 @@ class Analysis:
         # self.texts_new = усі тексти з теки new
         # self.posts_old = окремі пости з теки old
         # self.posts_new = окремі пости з теки new
-        for filename_old in tqdm(self.list_dir_old, desc='Reading "old" files'):
+        for filename_old in tqdm(self.list_dir_old, desc="Reading 'old' files"):
             with open(self.dir_old + filename_old, "r", encoding="utf-8", errors="surrogateescape") as f:
                 self.posts_old.append("".join(f.readlines()[2:]))
         self.texts_old = "\n".join(self.posts_old)
-        for filename_new in tqdm(self.list_dir_new, desc='Reading "new" files'):
+        for filename_new in tqdm(self.list_dir_new, desc="Reading 'new' files"):
             with open(self.dir_new + filename_new, "r", encoding="utf-8", errors="surrogateescape") as f:
                 self.posts_new.append("".join(f.readlines()[2:]))
         self.texts_new = "\n".join(self.posts_new)
@@ -62,10 +64,10 @@ class Analysis:
         # self.sentences_new = окремі речення з теки new
         # self.words_old = окремі слова з теки old
         # self.words_new = окремі слова з теки new
-        for post in tqdm(self.posts_old, desc="Tokenizing \"old\" files"):
+        for post in tqdm(self.posts_old, desc="Tokenizing 'old' files"):
             self.sentences_old.append([sentence.text for sentence in nlp(post).sentences])
             self.words_old.append([sentence.words for sentence in nlp(post).sentences])
-        for post in tqdm(self.posts_new, desc="Tokenizing \"new\" files"):
+        for post in tqdm(self.posts_new, desc="Tokenizing 'new' files"):
             self.sentences_new.append([sentence.text for sentence in nlp(post).sentences])
             self.words_new.append([sentence.words for sentence in nlp(post).sentences])
 
@@ -83,17 +85,23 @@ class Analysis:
         pass
 
     def rule_freq(self, data_period):
-        files_list = []
         data_dict = {"old": self.list_dir_old,
                      "new": self.list_dir_new}
+        month_days = {("feb"): 28,
+                      ("apr", "jun", "sep", "nov"): 30,
+                      ("jan", "mar", "may", "jul", "aug", "oct", "dec"): 31}
+        files_list = []
         if data_period in ["old", "new"]:
             for file in data_dict[data_period]:
                 file_name = file.split(".")
                 files_list.append(file_name[0])
         if files_list:
-            self.rule_result_freq[data_period] = round(len(files_list) / len(set(files_list)), 2)
-            return self.rule_result_freq[data_period]
-        self.rule_result_freq[data_period] = 0.0
+            month = files_list[0].split("_")[0]
+            key = [key for key in month_days.keys() if month in key][0]
+            self.rule_freq_result[data_period] = round(len(files_list) / month_days[key], 2)
+            # self.rule_result_freq[data_period] = round(len(files_list) / len(set(files_list)), 2)
+            return self.rule_freq_result[data_period]
+        self.rule_freq_result[data_period] = 0.0
         return 0.0
 
     def rule_links(self, data_period):
@@ -106,7 +114,7 @@ class Analysis:
         return self.rule_result_links[data_period]
 
     def full_analysis(self):
-        if self.name in os.listdir("../data"):
+        if self.name in os.listdir(self.data_directory):
             # приклад виклику правила і записування результатів
             self.rule("old")
             self.rule("new")
@@ -114,10 +122,12 @@ class Analysis:
             # тут викликати всі функції типу rule_{name}
             self.rule_freq("old")
             self.rule_freq("new")
-            self.rules_results.append(("Частота дописування", self.rule_result_freq["old"], self.rule_result_freq["new"]))
+            self.rules_results.append(("Частота дописування",
+                                       self.rule_freq_result["old"], self.rule_freq_result["new"]))
             self.rule_links("old")
             self.rule_links("new")
-            self.rules_results.append(("Частота посилань на інші джерела/людей", self.rule_result_links["old"], self.rule_result_links["new"]))
+            self.rules_results.append(("Частота посилань на інші джерела/людей", 
+                                       self.rule_result_links["old"], self.rule_result_links["new"]))
             return
         raise FileNotFoundError
 

@@ -2,7 +2,7 @@ import pytest
 from processing.analyses import Analysis
 
 name_politician = "zelenskyi"
-politician = Analysis(name_politician)
+politician = Analysis(name_politician, data_directory='../testing/data/')
 
 _test_cases_rule = [
     ["old", "expected result for old data"],
@@ -17,15 +17,15 @@ def test_some_rule(test_case):
 
 
 _test_cases_rule_freq = [
-    ["old", 0.0],
-    ["new", 1.5]
+    ["old", 0.26],
+    ["new", 1.0]
 ]
 
 
 @pytest.mark.parametrize("test_case", _test_cases_rule_freq)
 def test_rule_freq(test_case):
     politician.rule_freq(test_case[0])
-    assert politician.rule_result_freq[test_case[0]] == test_case[1]
+    assert politician.rule_freq_result[test_case[0]] == test_case[1]
 
 
 if __name__ == '__main__':
