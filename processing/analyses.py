@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 from datetime import date
 import stanza
 # stanza.download('uk')  # завантажте українську модель один раз
@@ -36,7 +37,12 @@ class Analysis:
         self.tokenize()
         # defined in each rule()
         self.rule_result = {"old": None, "new": None}
-        self.rule_freq_result = {"old": None, "new": None}
+        self.rule_posts_per_day_result = {"old": None, "new": None}
+        self.rule_size_result_sentences = {"old": None, "new": None}
+        self.rule_size_result_words = {"old": None, "new": None}
+        self.rule_frequency_list_result = {'old': None, 'new': None}
+        self.rule_result_links = {"old": None, "new": None}
+        self.rule_result_quotes = {"old": None, "new": None}
         self.rule_mark_text_result = {"old": {}, "new": {}}
         # results of the whole analysis
         self.rules_results = []
@@ -53,11 +59,11 @@ class Analysis:
         # self.posts_new = окремі пости з теки new
         for filename_old in tqdm(self.list_dir_old, desc="Reading 'old' files"):
             with open(self.dir_old + filename_old, "r", encoding="utf-8", errors="surrogateescape") as f:
-                self.posts_old.append("".join(f.readlines()[2:]))
+                self.posts_old.append("".join(f.readlines()[2:]).strip())
         self.texts_old = "\n".join(self.posts_old)
         for filename_new in tqdm(self.list_dir_new, desc="Reading 'new' files"):
             with open(self.dir_new + filename_new, "r", encoding="utf-8", errors="surrogateescape") as f:
-                self.posts_new.append("".join(f.readlines()[2:]))
+                self.posts_new.append("".join(f.readlines()[2:]).strip())
         self.texts_new = "\n".join(self.posts_new)
 
     def tokenize(self):
@@ -85,7 +91,7 @@ class Analysis:
         # return False
         pass
 
-    def rule_freq(self, data_period):
+    def rule_posts_per_day(self, data_period):
         data_dict = {"old": self.list_dir_old,
                      "new": self.list_dir_new}
         month_days = {("feb"): 28,
@@ -99,11 +105,62 @@ class Analysis:
         if files_list:
             month = files_list[0].split("_")[0]
             key = [key for key in month_days.keys() if month in key][0]
-            self.rule_freq_result[data_period] = round(len(files_list) / month_days[key], 2)
-            # self.rule_result_freq[data_period] = round(len(files_list) / len(set(files_list)), 2)
-            return self.rule_freq_result[data_period]
-        self.rule_freq_result[data_period] = 0.0
-        return 0.0
+            self.rule_posts_per_day_result[data_period] = round(len(files_list) / month_days[key], 2)
+            # self.rule_posts_per_day_result[data_period] = round(len(files_list) / len(set(files_list)), 2)
+            return self.rule_posts_per_day_result[data_period]
+        self.rule_posts_per_day_result[data_period] = 0.0
+        return 0.0    
+
+    def rule_size(self, data_period):
+        data_dict = {"old": self.words_old,
+                     "new": self.words_new}
+        posts_num = len(data_dict[data_period])
+        sentences_list = [sentence for post in data_dict[data_period] for sentence in post]
+        sentences_num = len(sentences_list)
+        words_num = len([word for sentence in sentences_list for word in sentence])
+        self.rule_size_result_sentences[data_period] = round(sentences_num / posts_num, 2)
+        self.rule_size_result_words[data_period] = round(words_num / posts_num, 2)
+        return self.rule_size_result_sentences[data_period], self.rule_size_result_words[data_period]
+        
+    def rule_frequency_list(self, data_period):
+        data_dict_sentences = {"old": self.sentences_old,
+                               "new": self.sentences_new}
+        data_dict_words = {"old": self.words_old,
+                           "new": self.words_new}
+        self.rule_frequency_list_result[data_period] = {}
+        lemmas = []
+        for text in data_dict_words[data_period]:
+            for sentence in text:
+                for word in sentence:
+                    if word.upos in ['PUNKT', 'SYM', 'X']:
+                        continue
+                    lemmas.append(word.lemma)
+                    self.rule_frequency_list_result[data_period][word.lemma] = 0
+
+        lemmas = list(set(lemmas))
+        for lemma in lemmas:
+            for text in data_dict_sentences[data_period]:
+                counts = Counter()
+                for sentence in text:
+                    counts.update(word.strip('.,?!"\':;').lower() for word in sentence.split())
+                self.rule_frequency_list_result[data_period][lemma] += counts[lemma]
+
+        return self.rule_frequency_list_result[data_period]
+
+    def prepare_frequency_list_to_print(self, data_period, words, words_in_line):
+        sorted_freq_words = dict(sorted(self.rule_frequency_list_result[data_period].items(), key=lambda x: x[1], reverse=True))
+        prepared_values = list(sum(zip(*[iter(list(sorted_freq_words.keys())[:words])] * words_in_line, ['\n'] * 100), tuple()))
+        return ' '.join(prepared_values)
+
+    def rule_links(self, data_period):
+        links = re.findall(r'<link>(https?://\S+)<\/link>', self.texts_old if data_period == "old" else self.texts_new)
+        self.rule_result_links[data_period] = len(links)
+        return self.rule_result_links[data_period]
+
+    def rule_quotes(self, data_period):
+        quotes = re.findall(r'«(.*?)»', self.texts_old if data_period == "old" else self.texts_new)
+        self.rule_result_quotes[data_period] = len(quotes)
+        return self.rule_result_quotes[data_period]
 
     def rule_mark_text(self, data_period):
         if data_period == "old":
@@ -124,17 +181,37 @@ class Analysis:
             self.rule_mark_text_result["new"] = len(caps_words)
             return self.rule_mark_text_result['new'], {i:caps_words.count(i) for i in set(caps_words)}
 
-    def full_analysis(self):
+    def full_analysis(self, words=10, words_in_line=5):
         if self.name in os.listdir(self.data_directory):
             # приклад виклику правила і записування результатів
             self.rule("old")
             self.rule("new")
             self.rules_results.append(("Rule name", self.rule_result["old"], self.rule_result["new"]))
             # тут викликати всі функції типу rule_{name}
-            self.rule_freq("old")
-            self.rule_freq("new")
+            self.rule_posts_per_day("old")
+            self.rule_posts_per_day("new")
             self.rules_results.append(("Частота дописування",
-                                       self.rule_freq_result["old"], self.rule_freq_result["new"]))
+                                       self.rule_posts_per_day_result["old"], 
+                                       self.rule_posts_per_day_result["new"]))
+            self.rule_size("old")
+            self.rule_size("new")
+            self.rules_results.append(("Середня кількість речень у пості",
+                                       self.rule_size_result_sentences["old"], self.rule_size_result_sentences["new"]))
+            self.rules_results.append(("Середня кількість слів у пості",
+                                       self.rule_size_result_words["old"], self.rule_size_result_words["new"]))
+            self.rule_frequency_list('old')
+            self.rule_frequency_list('new')
+            self.rules_results.append(("Частотні слова",
+                                       self.prepare_frequency_list_to_print("old", words, words_in_line),
+                                       self.prepare_frequency_list_to_print("new", words, words_in_line)))
+            self.rule_links("old")
+            self.rule_links("new")
+            self.rules_results.append(("Частота посилань на інші джерела/людей", 
+                                       self.rule_result_links["old"], self.rule_result_links["new"]))
+            self.rule_quotes("old")
+            self.rule_quotes("new")
+            self.rules_results.append(("Кількість цитат",
+                                      self.rule_result_quotes["old"], self.rule_result_quotes["new"]))
             self.rule_mark_text("old")
             self.rule_mark_text("new")
             self.rules_results.append(("Прийом маркування тексту",
@@ -162,8 +239,8 @@ class Analysis:
 
 
 if __name__ == "__main__":
-    politician = Analysis("zelenskyi")
+    politician = Analysis("shmygal")
     # politician.rule()
     # print(politician.rule_result)
-    # politician.full_analysis()
-    # politician.show_results(save=True)
+    politician.full_analysis(70, 7)
+    politician.show_results(save=True)
