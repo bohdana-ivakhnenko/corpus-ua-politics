@@ -117,7 +117,7 @@ class Analysis:
         self.rule_size_result_words[data_period] = round(words_num / posts_num, 2)
         return self.rule_size_result_sentences[data_period], self.rule_size_result_words[data_period]
 
-  def rule_links(self, data_period):
+    def rule_links(self, data_period):
         links = re.findall(r'<link>(https?://\S+)<\/link>', self.texts_old if data_period == "old" else self.texts_new)
         num_links = len(links)
         if num_links == 0:
@@ -125,6 +125,15 @@ class Analysis:
         else:
             self.rule_result_links[data_period] = num_links
         return self.rule_result_links[data_period]
+
+    def rule_quotes(self, data_period):
+        quotes = re.findall(r'"(.*?)"', self.texts_old if data_period == "old" else self.texts_new)
+        num_quotes = len(quotes)
+        if num_quotes == 0:
+            self.rule_result_quotes[data_period] = 0
+        else:
+            self.rule_result_quotes[data_period] = num_quotes
+        return self.rule_result_quotes[data_period]
 
     def full_analysis(self):
         if self.name in os.listdir(self.data_directory):
@@ -148,6 +157,10 @@ class Analysis:
             self.rule_links("new")
             self.rules_results.append(("Частота посилань на інші джерела/людей", 
                                        self.rule_result_links["old"], self.rule_result_links["new"]))
+            self.rule_quotes("old")
+            self.rule_quotes("new")
+            self.rule_results.append(("Кількість цитат",
+                                      self.rule_result_quotes["old"], self.rule_result_quotes["new"]))
             return
         raise FileNotFoundError
 
