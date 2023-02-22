@@ -231,6 +231,16 @@ class Analysis:
             number = max(numbers) + 1
         return f"{self.name}_{day}_{number}.txt"
 
+    def emotions_in_punctuation(self, data_directory):
+        emotionality_value = 0
+        for filename in os.listdir(data_directory):
+            with open(os.path.join(data_directory, filename), 'r', encoding='utf-8') as file:
+                content = file.read()
+            for i in content:
+                if i.endswith("!!") or i.endswith("..") or i.endswith("??") or i.endswith("?!"):
+                    emotionality_value += 1
+        return (f"{'Емоційність у пунктуації': {emotionality_value}}")
+
     def show_results(self, headers=("Правило", "2021 рік", "2022 рік"), save=False):
         # options for the tablefmt: "pretty", "fancy_grid"
         if save:
