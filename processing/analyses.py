@@ -111,7 +111,7 @@ class Analysis:
         vocabulary_of_we = ["ми", "нас", "нам", "нами"]
         morph = pymorphy2.MorphAnalyzer(lang="uk")
         for file_name in os.listdir(data_directory):
-            with open(os.path.join('C:/Users/nd090/PycharmProjects/pythonProject13/maliar/new', file_name), 'r', encoding='utf-8') as file:
+            with open(os.path.join(data_directory, file_name), 'r', encoding='utf-8') as file:
                 content = file.read()
             for i in content:
                 if i in vocabulary_of_inclusion_adverbs:
