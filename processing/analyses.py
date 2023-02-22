@@ -124,7 +124,7 @@ class Analysis:
         return self.rule_result_links[data_period]
 
     def rule_quotes(self, data_period):
-        quotes = re.findall(r'"(.*?)"', self.texts_old if data_period == "old" else self.texts_new)
+        quotes = re.findall(r'«(.*?)»', self.texts_old if data_period == "old" else self.texts_new)
         self.rule_result_quotes[data_period] = len(quotes)
         return self.rule_result_quotes[data_period]
 
