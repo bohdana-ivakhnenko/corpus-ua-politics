@@ -1,10 +1,11 @@
 import os
 from datetime import date
 import stanza
-stanza.download("uk")
+# stanza.download('uk')  # завантажте українську модель один раз
 from tabulate import tabulate
 import re
 from tqdm import tqdm
+
 nlp = stanza.Pipeline("uk")
 
 
@@ -106,21 +107,22 @@ class Analysis:
 
     def rule_mark_text(self, data_period):
         if data_period == "old":
-           texts = self.texts_old
+            texts = self.texts_old
         if data_period == "new":
-           texts = self.texts_new
+            texts = self.texts_new
         word = [line.strip(".,!?():;«»") for line in texts.split()]
         abbr_dict = open("../dictionaries/abbrev.txt", "r", encoding="utf-8")
         abbr_read = [line.strip() for line in abbr_dict.readlines()]
         caps_words = []
         for w in word:
-           if w not in abbr_read and w.isupper() and len(w) > 1 and not re.match('^(?=.*[0-9]$)(?=.*[0-9])', w):
-               caps_words.append(w)
+            if w not in abbr_read and w.isupper() and len(w) > 1 and not re.match('^(?=.*[0-9]$)(?=.*[0-9])', w):
+                caps_words.append(w)
         if data_period == "old":
-           self.rule_mark_text_result["old"] = len(caps_words)
+            self.rule_mark_text_result["old"] = len(caps_words)
+            return self.rule_mark_text_result["old"], {i:caps_words.count(i) for i in set(caps_words)}
         if data_period == "new":
-           self.rule_mark_text_result["new"] = len(caps_words)
-        return self.rule_mark_text_result, {i:caps_words.count(i) for i in set(caps_words)}
+            self.rule_mark_text_result["new"] = len(caps_words)
+            return self.rule_mark_text_result['new'], {i:caps_words.count(i) for i in set(caps_words)}
 
     def full_analysis(self):
         if self.name in os.listdir(self.data_directory):
