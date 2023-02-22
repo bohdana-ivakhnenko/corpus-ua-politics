@@ -4,6 +4,7 @@ import stanza
 # stanza.download('uk')  # завантажте українську модель один раз
 from tabulate import tabulate
 import re
+import pymorphy2
 from tqdm import tqdm
 nlp = stanza.Pipeline("uk")
 
@@ -102,6 +103,29 @@ class Analysis:
             return self.rule_freq_result[data_period]
         self.rule_freq_result[data_period] = 0.0
         return 0.0
+
+    def tactics_of_inclusion(self, data_directory):
+        index_of_inclusion_adverbs = 0
+        index_of_inclusion_we = 0
+        vocabulary_of_inclusion_adverbs = ["разом", "спільно", "гуртом", "заодно", "згуртовано", "спільними зусиллями"]
+        vocabulary_of_we = ["ми", "нас", "нам", "нами"]
+        morph = pymorphy2.MorphAnalyzer(lang="uk")
+        for file_name in os.listdir(data_directory):
+            with open(os.path.join('C:/Users/nd090/PycharmProjects/pythonProject13/maliar/new', file_name), 'r', encoding='utf-8') as file:
+                content = file.read()
+            for i in content:
+                if i in vocabulary_of_inclusion_adverbs:
+                    index_of_inclusion_adverbs += 1
+                elif i in vocabulary_of_we:
+                    index_of_inclusion_we += 1
+        for item in content:
+            language_variable = morph.parse(item)
+            for elem in language_variable:
+                if elem.tag.POS == "VERB":
+                    if elem.word[-3:] == "имо" or elem.word[-3:] == "їмо" or elem.word[-3:] == "емо" or elem.word[-3:] == "ємо":
+                        index_of_inclusion_we += 1
+        result = index_of_inclusion_adverbs + index_of_inclusion_we
+        return (f"{'Міра інклюзивности': {result}}")
 
     def full_analysis(self):
         if self.name in os.listdir(self.data_directory):
