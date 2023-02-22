@@ -128,6 +128,17 @@ class Analysis:
             number = max(numbers) + 1
         return f"{self.name}_{day}_{number}.txt"
 
+    def psychological_inversion(self, data_directory):
+        searched_words = ['а', 'але', 'проте', 'зате', 'однак']
+        for filename in os.listdir(data_directory):
+            # if filename.endswith('.txt'):  # шукаємо тільки файли з розширенням .txt
+            with open(os.path.join(data_directory, filename), 'r', encoding='utf-8') as file:
+                contents = file.read()
+            for i, sentence in enumerate(contents.split('.')):
+                words_in_sentence = set(sentence.split())
+                if words_in_sentence.intersection(searched_words):
+                    print(f"{filename}: {i+1}. {sentence}")
+
     def show_results(self, headers=("Правило", "2021 рік", "2022 рік"), save=False):
         # options for the tablefmt: "pretty", "fancy_grid"
         if save:
