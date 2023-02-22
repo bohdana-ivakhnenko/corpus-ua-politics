@@ -170,21 +170,20 @@ class Analysis:
 
     def find_en_and_rus(self, data_directory):
         
-        pattern = r"([a-z]|ы|ъ|э){1,10}"
-        
+        pattern_eng = r"([a-z]){1,10}"
+        pattern_rus = r"(ы|ъ|э){1,10}"
+
         for name in os.listdir(data_directory):
-            if name.endswith('.txt'):
-                with open(os.path.join(data_directory, name), 'r', encoding='utf-8') as file:
-                    contents = file.read()
-                    contents = re.sub(r'http\S+', '', contents)
-                #with open(os.path.join(data_directory, name), 'w', encoding='utf-8') as new_file:
-                    #new_file.write(contents)
-                matches = re.findall(pattern, contents)
-                for i, match in enumerate(matches):
-                    first = max(0, contents.find(match) -20)
-                    last = min(len(contents), contents.find(match) +20)
-                    context = contents[first:last]
-                    print(f"{name}: {context}")
+            with open(os.path.join(data_directory, name), 'r', encoding='utf-8') as file:
+                contents = file.read()
+                for i in contents:
+                    match_eng = re.findall(pattern_eng, i)
+                    match_rus = re.findall(pattern_rus, i)
+
+            result_eng = len(match_eng)
+            result_rus = len(match_rus)
+
+        return(f"""{{"Кількість дописів англійською" : {result_eng}, "Кількість дописів російською": {result_rus}}}""")
 
     def show_results(self, headers=("Правило", "2021 рік", "2022 рік"), save=False):
         # options for the tablefmt: "pretty", "fancy_grid"
