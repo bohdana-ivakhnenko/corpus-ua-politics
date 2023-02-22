@@ -1,10 +1,12 @@
 import os
+from collections import Counter
 from datetime import date
 import stanza
 # stanza.download('uk')  # завантажте українську модель один раз
 from tabulate import tabulate
 import re
 from tqdm import tqdm
+
 nlp = stanza.Pipeline("uk")
 
 
@@ -38,6 +40,7 @@ class Analysis:
         self.rule_posts_per_day_result = {"old": None, "new": None}
         self.rule_size_result_sentences = {"old": None, "new": None}
         self.rule_size_result_words = {"old": None, "new": None}
+        self.rule_frequency_list_result = {'old': None, 'new': None}
         self.rule_result_links = {"old": None, "new": None}
         self.rule_result_quotes = {"old": None, "new": None}
         # results of the whole analysis
@@ -105,7 +108,7 @@ class Analysis:
             # self.rule_posts_per_day_result[data_period] = round(len(files_list) / len(set(files_list)), 2)
             return self.rule_posts_per_day_result[data_period]
         self.rule_posts_per_day_result[data_period] = 0.0
-        return 0.0
+        return 0.0    
 
     def rule_size(self, data_period):
         data_dict = {"old": self.words_old,
@@ -117,6 +120,36 @@ class Analysis:
         self.rule_size_result_sentences[data_period] = round(sentences_num / posts_num, 2)
         self.rule_size_result_words[data_period] = round(words_num / posts_num, 2)
         return self.rule_size_result_sentences[data_period], self.rule_size_result_words[data_period]
+        
+    def rule_frequency_list(self, data_period):
+        data_dict_sentences = {"old": self.sentences_old,
+                               "new": self.sentences_new}
+        data_dict_words = {"old": self.words_old,
+                           "new": self.words_new}
+        self.rule_frequency_list_result[data_period] = {}
+        lemmas = []
+        for text in data_dict_words[data_period]:
+            for sentence in text:
+                for word in sentence:
+                    if word.upos in ['PUNKT', 'SYM', 'X']:
+                        continue
+                    lemmas.append(word.lemma)
+                    self.rule_frequency_list_result[data_period][word.lemma] = 0
+
+        lemmas = list(set(lemmas))
+        for lemma in lemmas:
+            for text in data_dict_sentences[data_period]:
+                counts = Counter()
+                for sentence in text:
+                    counts.update(word.strip('.,?!"\':;').lower() for word in sentence.split())
+                self.rule_frequency_list_result[data_period][lemma] += counts[lemma]
+
+        return self.rule_frequency_list_result[data_period]
+
+    def prepare_frequency_list_to_print(self, data_period, words, words_in_line):
+        sorted_freq_words = dict(sorted(self.rule_frequency_list_result[data_period].items(), key=lambda x: x[1], reverse=True))
+        prepared_values = list(sum(zip(*[iter(list(sorted_freq_words.keys())[:words])] * words_in_line, ['\n'] * 100), tuple()))
+        return ' '.join(prepared_values)
 
     def rule_links(self, data_period):
         links = re.findall(r'<link>(https?://\S+)<\/link>', self.texts_old if data_period == "old" else self.texts_new)
@@ -128,7 +161,7 @@ class Analysis:
         self.rule_result_quotes[data_period] = len(quotes)
         return self.rule_result_quotes[data_period]
 
-    def full_analysis(self):
+    def full_analysis(self, words=10, words_in_line=5):
         if self.name in os.listdir(self.data_directory):
             # приклад виклику правила і записування результатів
             self.rule("old")
@@ -138,6 +171,7 @@ class Analysis:
             self.rule_posts_per_day("old")
             self.rule_posts_per_day("new")
             self.rules_results.append(("Частота дописування",
+                                       self.rule_freq_result["old"], self.rule_freq_result["new"]))
                                        self.rule_posts_per_day_result["old"], 
                                        self.rule_posts_per_day_result["new"]))
             self.rule_size("old")
@@ -146,6 +180,11 @@ class Analysis:
                                        self.rule_size_result_sentences["old"], self.rule_size_result_sentences["new"]))
             self.rules_results.append(("Середня кількість слів у пості",
                                        self.rule_size_result_words["old"], self.rule_size_result_words["new"]))
+            self.rule_frequency_list('old')
+            self.rule_frequency_list('new')
+            self.rules_results.append(("Частотні слова",
+                                       self.prepare_frequency_list_to_print("old", words, words_in_line),
+                                       self.prepare_frequency_list_to_print("new", words, words_in_line)))
             self.rule_links("old")
             self.rule_links("new")
             self.rules_results.append(("Частота посилань на інші джерела/людей", 
@@ -177,8 +216,8 @@ class Analysis:
 
 
 if __name__ == "__main__":
-    politician = Analysis("zelenskyi")
+    politician = Analysis("shmygal")
     # politician.rule()
     # print(politician.rule_result)
-    # politician.full_analysis()
-    # politician.show_results(save=True)
+    politician.full_analysis(70, 7)
+    politician.show_results(save=True)
