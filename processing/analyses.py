@@ -163,6 +163,7 @@ class Analysis:
         return self.rule_result_quotes[data_period]
 
     def rule_mark_text(self, data_period):
+        texts = ""
         if data_period == "old":
             texts = self.texts_old
         if data_period == "new":
@@ -184,14 +185,14 @@ class Analysis:
     def full_analysis(self, words=10, words_in_line=5):
         if self.name in os.listdir(self.data_directory):
             # приклад виклику правила і записування результатів
-            self.rule("old")
-            self.rule("new")
-            self.rules_results.append(("Rule name", self.rule_result["old"], self.rule_result["new"]))
+            # self.rule("old")
+            # self.rule("new")
+            # self.rules_results.append(("Rule name", self.rule_result["old"], self.rule_result["new"]))
             # тут викликати всі функції типу rule_{name}
             self.rule_posts_per_day("old")
             self.rule_posts_per_day("new")
             self.rules_results.append(("Частота дописування",
-                                       self.rule_posts_per_day_result["old"], 
+                                       self.rule_posts_per_day_result["old"],
                                        self.rule_posts_per_day_result["new"]))
             self.rule_size("old")
             self.rule_size("new")
@@ -239,8 +240,9 @@ class Analysis:
 
 
 if __name__ == "__main__":
-    politician = Analysis("shmygal")
-    # politician.rule()
-    # print(politician.rule_result)
-    politician.full_analysis(70, 7)
-    politician.show_results(save=True)
+    for folder in [folder for folder in os.listdir('../data/') if "." not in folder]:
+        politician = Analysis(folder)
+        # politician.rule()
+        # print(politician.rule_result)
+        politician.full_analysis()
+        politician.show_results(save=True)
