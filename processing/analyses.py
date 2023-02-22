@@ -168,6 +168,24 @@ class Analysis:
             number = max(numbers) + 1
         return f"{self.name}_{day}_{number}.txt"
 
+    def find_en_and_rus(self, data_directory):
+        
+        pattern = r"([a-z]|ы|ъ|э){1,10}"
+        
+        for name in os.listdir(data_directory):
+            if name.endswith('.txt'):
+                with open(os.path.join(data_directory, name), 'r', encoding='utf-8') as file:
+                    contents = file.read()
+                    contents = re.sub(r'http\S+', '', contents)
+                #with open(os.path.join(data_directory, name), 'w', encoding='utf-8') as new_file:
+                    #new_file.write(contents)
+                matches = re.findall(pattern, contents)
+                for i, match in enumerate(matches):
+                    first = max(0, contents.find(match) -20)
+                    last = min(len(contents), contents.find(match) +20)
+                    context = contents[first:last]
+                    print(f"{name}: {context}")
+
     def show_results(self, headers=("Правило", "2021 рік", "2022 рік"), save=False):
         # options for the tablefmt: "pretty", "fancy_grid"
         if save:
