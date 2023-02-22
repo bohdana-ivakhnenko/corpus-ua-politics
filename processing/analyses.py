@@ -39,6 +39,7 @@ class Analysis:
         self.rule_size_result_sentences = {"old": None, "new": None}
         self.rule_size_result_words = {"old": None, "new": None}
         self.rule_result_links = {"old": None, "new": None}
+        self.rule_result_quotes = {"old": None, "new": None}
         # results of the whole analysis
         self.rules_results = []
 
@@ -119,20 +120,12 @@ class Analysis:
 
     def rule_links(self, data_period):
         links = re.findall(r'<link>(https?://\S+)<\/link>', self.texts_old if data_period == "old" else self.texts_new)
-        num_links = len(links)
-        if num_links == 0:
-            self.rule_result_links[data_period] = 0
-        else:
-            self.rule_result_links[data_period] = num_links
+        self.rule_result_links[data_period] = len(links)
         return self.rule_result_links[data_period]
 
     def rule_quotes(self, data_period):
         quotes = re.findall(r'"(.*?)"', self.texts_old if data_period == "old" else self.texts_new)
-        num_quotes = len(quotes)
-        if num_quotes == 0:
-            self.rule_result_quotes[data_period] = 0
-        else:
-            self.rule_result_quotes[data_period] = num_quotes
+        self.rule_result_quotes[data_period] = len(quotes)
         return self.rule_result_quotes[data_period]
 
     def full_analysis(self):
@@ -159,7 +152,7 @@ class Analysis:
                                        self.rule_result_links["old"], self.rule_result_links["new"]))
             self.rule_quotes("old")
             self.rule_quotes("new")
-            self.rule_results.append(("Кількість цитат",
+            self.rules_results.append(("Кількість цитат",
                                       self.rule_result_quotes["old"], self.rule_result_quotes["new"]))
             return
         raise FileNotFoundError
