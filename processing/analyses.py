@@ -1,11 +1,11 @@
 import os
 from datetime import date
-# import stanza
-# stanza.download("uk")
+import stanza
+stanza.download("uk")
 from tabulate import tabulate
 import re
 from tqdm import tqdm
-# nlp = stanza.Pipeline("uk")
+nlp = stanza.Pipeline("uk")
 
 
 class Analysis:
@@ -32,7 +32,7 @@ class Analysis:
         # words are already parametrised
         self.words_old = []
         self.words_new = []
-        # self.tokenize()
+        self.tokenize()
         # defined in each rule()
         self.rule_result = {"old": None, "new": None}
         self.rule_freq_result = {"old": None, "new": None}
@@ -64,13 +64,12 @@ class Analysis:
         # self.sentences_new = окремі речення з теки new
         # self.words_old = окремі слова з теки old
         # self.words_new = окремі слова з теки new
-        # for post in tqdm(self.posts_old, desc="Tokenizing 'old' files"):
-            # self.sentences_old.append([sentence.text for sentence in nlp(post).sentences])
-            # self.words_old.append([sentence.words for sentence in nlp(post).sentences])
-        # for post in tqdm(self.posts_new, desc="Tokenizing 'new' files"):
-            # self.sentences_new.append([sentence.text for sentence in nlp(post).sentences])
-            # self.words_new.append([sentence.words for sentence in nlp(post).sentences])
-        pass
+        for post in tqdm(self.posts_old, desc="Tokenizing 'old' files"):
+            self.sentences_old.append([sentence.text for sentence in nlp(post).sentences])
+            self.words_old.append([sentence.words for sentence in nlp(post).sentences])
+        for post in tqdm(self.posts_new, desc="Tokenizing 'new' files"):
+            self.sentences_new.append([sentence.text for sentence in nlp(post).sentences])
+            self.words_new.append([sentence.words for sentence in nlp(post).sentences])
 
     def rule(self, data_period):
         # тіло аналізу
@@ -105,10 +104,10 @@ class Analysis:
         self.rule_freq_result[data_period] = 0.0
         return 0.0
 
-    def rule_mark_text(self, period):
-        if period == "old":
+    def rule_mark_text(self, data_period):
+        if data_period == "old":
            texts = self.texts_old
-        if period == "new":
+        if data_period == "new":
            texts = self.texts_new
         word = [line.strip(".,!?():;«»") for line in texts.split()]
         abbr_dict = open("../dictionaries/abbrev.txt", "r", encoding="utf-8")
@@ -117,14 +116,11 @@ class Analysis:
         for w in word:
            if w not in abbr_read and w.isupper() and len(w) > 1 and not re.match('^(?=.*[0-9]$)(?=.*[0-9])', w):
                caps_words.append(w)
-        if period == "old":
-           self.rule_mark_text_result["old"] = {i:caps_words.count(i) for i in set(caps_words)}
-        if period == "new":
-           self.rule_mark_text_result["new"] = {i: caps_words.count(i) for i in set(caps_words)}
-            # return caps_words_dict
-            # print(caps_words)
-        # print(self.rule_mark_text_result)
-        return self.rule_mark_text_result
+        if data_period == "old":
+           self.rule_mark_text_result["old"] = len(caps_words)
+        if data_period == "new":
+           self.rule_mark_text_result["new"] = len(caps_words)
+        return self.rule_mark_text_result, {i:caps_words.count(i) for i in set(caps_words)}
 
     def full_analysis(self):
         if self.name in os.listdir(self.data_directory):
@@ -139,11 +135,8 @@ class Analysis:
                                        self.rule_freq_result["old"], self.rule_freq_result["new"]))
             self.rule_mark_text("old")
             self.rule_mark_text("new")
-            print(self.rule_mark_text_result["old"])
-            print()
-            print(self.rule_mark_text_result["new"])
-            # self.rules_results.append(("Прийом маркування тексту",
-            #                            self.rule_mark_text_result["old"], self.rule_mark_text_result["new"]))
+            self.rules_results.append(("Прийом маркування тексту",
+                                       self.rule_mark_text_result["old"], self.rule_mark_text_result["new"]))
             return
         raise FileNotFoundError
 
@@ -167,6 +160,8 @@ class Analysis:
 
 
 if __name__ == "__main__":
-    politician = Analysis("prytula")
-    politician.full_analysis()
-    politician.show_results(save=True)# politician.mark_text()
+    politician = Analysis("zelenskyi")
+    # politician.rule()
+    # print(politician.rule_result)
+    # politician.full_analysis()
+    # politician.show_results(save=True)
