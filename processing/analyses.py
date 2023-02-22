@@ -43,6 +43,7 @@ class Analysis:
         self.rule_frequency_list_result = {'old': None, 'new': None}
         self.rule_result_links = {"old": None, "new": None}
         self.rule_result_quotes = {"old": None, "new": None}
+        self.rule_mark_text_result = {"old": {}, "new": {}}
         # results of the whole analysis
         self.rules_results = []
 
@@ -161,6 +162,25 @@ class Analysis:
         self.rule_result_quotes[data_period] = len(quotes)
         return self.rule_result_quotes[data_period]
 
+    def rule_mark_text(self, data_period):
+        if data_period == "old":
+            texts = self.texts_old
+        if data_period == "new":
+            texts = self.texts_new
+        word = [line.strip(".,!?():;«»") for line in texts.split()]
+        abbr_dict = open("../dictionaries/abbrev.txt", "r", encoding="utf-8")
+        abbr_read = [line.strip() for line in abbr_dict.readlines()]
+        caps_words = []
+        for w in word:
+            if w not in abbr_read and w.isupper() and len(w) > 1 and not re.match('^(?=.*[0-9]$)(?=.*[0-9])', w):
+                caps_words.append(w)
+        if data_period == "old":
+            self.rule_mark_text_result["old"] = len(caps_words)
+            return self.rule_mark_text_result["old"], {i:caps_words.count(i) for i in set(caps_words)}
+        if data_period == "new":
+            self.rule_mark_text_result["new"] = len(caps_words)
+            return self.rule_mark_text_result['new'], {i:caps_words.count(i) for i in set(caps_words)}
+
     def full_analysis(self, words=10, words_in_line=5):
         if self.name in os.listdir(self.data_directory):
             # приклад виклику правила і записування результатів
@@ -171,7 +191,6 @@ class Analysis:
             self.rule_posts_per_day("old")
             self.rule_posts_per_day("new")
             self.rules_results.append(("Частота дописування",
-                                       self.rule_freq_result["old"], self.rule_freq_result["new"]))
                                        self.rule_posts_per_day_result["old"], 
                                        self.rule_posts_per_day_result["new"]))
             self.rule_size("old")
@@ -193,6 +212,10 @@ class Analysis:
             self.rule_quotes("new")
             self.rules_results.append(("Кількість цитат",
                                       self.rule_result_quotes["old"], self.rule_result_quotes["new"]))
+            self.rule_mark_text("old")
+            self.rule_mark_text("new")
+            self.rules_results.append(("Прийом маркування тексту",
+                                       self.rule_mark_text_result["old"], self.rule_mark_text_result["new"]))
             return
         raise FileNotFoundError
 
