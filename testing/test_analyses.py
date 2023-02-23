@@ -1,7 +1,7 @@
 import pytest
 from processing.analyses import Analysis
 
-name_politician = "zelenskyi"
+name_politician = "klychko"
 politician = Analysis(name_politician, data_directory='../testing/data/')
 
 _test_cases_rule = [

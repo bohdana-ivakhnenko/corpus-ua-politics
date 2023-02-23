@@ -4,6 +4,8 @@ import stanza
 # stanza.download('uk')  # завантажте українську модель один раз
 from tabulate import tabulate
 import re
+import emoji
+import advertools as adv
 from tqdm import tqdm
 nlp = stanza.Pipeline("uk")
 
@@ -82,6 +84,11 @@ class Analysis:
         #    return rule_result[data_period]
         # return False
         pass
+
+    def rule_emojis(self,data_period):
+        emojis = adv.extract(self.texts_old if data_period == "old" else self.texts_new)
+        self.rule_result_emoji[data_period]=emojis['emoji_flat']
+        return self.rule_result_emojis[data_period]
 
     def rule_freq(self, data_period):
         data_dict = {"old": self.list_dir_old,
