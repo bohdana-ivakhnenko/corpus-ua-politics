@@ -169,21 +169,22 @@ class Analysis:
         return f"{self.name}_{day}_{number}.txt"
 
     def find_en_and_rus(self, data_directory):
-        
-        pattern_eng = r"([a-z]){1,10}"
-        pattern_rus = r"(ы|ъ|э){1,10}"
+        russian_regex = re.compile('[ЫыэЭёЁ]+')
+        english_regex = re.compile('[a-zA-Z]+')
+    
+        for post in self.posts_new:
+            russian_matches_new = russian_regex.findall(self.post)
+            english_matches_new = english_regex.findall(self.post)
+            russian_count_new = len(russian_matches_new)
+            english_count_new = len(english_matches_new)
+        for post in self.posts_old:
+            russian_matches_old = russian_regex.findall(self.post)
+            english_matches_old = english_regex.findall(self.post)
+            russian_count_old = len(russian_matches_old)
+            english_count_old = len(english_matches_old)
 
-        for name in os.listdir(data_directory):
-            with open(os.path.join(data_directory, name), 'r', encoding='utf-8') as file:
-                contents = file.read()
-                for i in contents:
-                    match_eng = re.findall(pattern_eng, i)
-                    match_rus = re.findall(pattern_rus, i)
-
-            result_eng = len(match_eng)
-            result_rus = len(match_rus)
-
-        return(f"""{{"Кількість дописів англійською" : {result_eng}, "Кількість дописів російською": {result_rus}}}""")
+        return(f"""{'Папка 2021 ': {self.posts_old}, 'Кількість слів російською мовою: ': {russian_count_old}, 'Кількість слів англійською мовою: ': {english_count_old},
+        'Папка 2022 ': {self.posts_new}, 'Кількість слів російською мовою: ': {russian_count_new}, 'Кількість слів англійською мовою: ': {english_count_new}}""")
 
     def show_results(self, headers=("Правило", "2021 рік", "2022 рік"), save=False):
         # options for the tablefmt: "pretty", "fancy_grid"
