@@ -231,6 +231,24 @@ class Analysis:
             number = max(numbers) + 1
         return f"{self.name}_{day}_{number}.txt"
 
+    def find_en_and_rus(self, data_directory):
+        russian_regex = re.compile('[ЫыэЭёЁ]+')
+        english_regex = re.compile('[a-zA-Z]+')
+    
+        for post in self.posts_new:
+            russian_matches_new = russian_regex.findall(self.post)
+            english_matches_new = english_regex.findall(self.post)
+            russian_count_new = len(russian_matches_new)
+            english_count_new = len(english_matches_new)
+        for post in self.posts_old:
+            russian_matches_old = russian_regex.findall(self.post)
+            english_matches_old = english_regex.findall(self.post)
+            russian_count_old = len(russian_matches_old)
+            english_count_old = len(english_matches_old)
+
+        return(f"""{'Папка 2021 ': {self.posts_old}, 'Кількість слів російською мовою: ': {russian_count_old}, 'Кількість слів англійською мовою: ': {english_count_old},
+        'Папка 2022 ': {self.posts_new}, 'Кількість слів російською мовою: ': {russian_count_new}, 'Кількість слів англійською мовою: ': {english_count_new}}""")
+
     def show_results(self, headers=("Правило", "2021 рік", "2022 рік"), save=False):
         # options for the tablefmt: "pretty", "fancy_grid"
         if save:
