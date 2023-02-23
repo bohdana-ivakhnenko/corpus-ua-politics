@@ -231,6 +231,18 @@ class Analysis:
             number = max(numbers) + 1
         return f"{self.name}_{day}_{number}.txt"
 
+    def rule_psychological_inversion(self, data_period):
+        data_dict = {"old": self.words_old,
+                    "new": self.words_new}
+        searched_words = ['а', 'але', 'проте', 'зате', 'однак']
+        occurrences = 0
+        for post in data_dict[data_period]:
+            for word in [word for sentence in post for word in sentence]:
+                if word.text in searched_words:
+                    occurrences += 1
+        self.rule_psychological_inversion_result[data_period] = occurrences
+        return self.rule_psychological_inversion_result[data_period]
+
     def show_results(self, headers=("Правило", "2021 рік", "2022 рік"), save=False):
         # options for the tablefmt: "pretty", "fancy_grid"
         if save:
