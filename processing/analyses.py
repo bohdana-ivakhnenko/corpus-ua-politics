@@ -231,6 +231,32 @@ class Analysis:
             number = max(numbers) + 1
         return f"{self.name}_{day}_{number}.txt"
 
+    def find_datas(self, name, data_directory='../data/'):
+        # чи ок, що немає return???
+        date_regex = r"\b\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}\b"
+        month_regex = r"\b(?:січ|лют|бер|кві|тра|чер|лип|сер|вер|жов|лис|гру)ня\b"
+        year_regex = r"\b\d{4}\b"
+        weekday_regex = r"\b(?:понеділок|вівторок|середа|четвер|п'ятниця|субота|неділя)\b"
+        for file_name in os.listdir(data_directory):
+            if file_name.endswith(".txt"):
+                file_path = os.path.join(data_directory, file_name)
+                with open(file_path, "r", encoding="utf-8") as f:
+                    text = f.read()
+                    dates = re.findall(date_regex, text)
+                    months = re.findall(month_regex, text)
+                    years = re.findall(year_regex, text)
+                    weekdays = re.findall(weekday_regex, text)
+                    if dates:
+                        print("Файл {} містить дати: {}".format(file_name, ", ".join(dates)))
+                    if months:
+                        print("Файл {} містить місяці: {}".format(file_name, ", ".join(months)))
+                    if years:
+                        print("Файл {} містить роки: {}".format(file_name, ", ".join(years)))
+                    if weekdays:
+                        print("Файл {} містить дні тижня: {}".format(file_name, ", ".join(weekdays)))
+                    if dates and months and years:
+                        print("Файл {} містить важливі дати: {}".format(file_name, ", ".join(dates, months, years)))
+
     def show_results(self, headers=("Правило", "2021 рік", "2022 рік"), save=False):
         # options for the tablefmt: "pretty", "fancy_grid"
         if save:
